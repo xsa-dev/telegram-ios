@@ -58,7 +58,7 @@ final class NavigationSplitContainer: ASDisplayNode {
         
         self.separator = ASDisplayNode()
         self.separator.backgroundColor = theme.navigationBar.separatorColor
-
+        
         self.resizeHandle = ASDisplayNode()
         self.resizeHandle.backgroundColor = .clear
         self.resizeHandle.isUserInteractionEnabled = true
