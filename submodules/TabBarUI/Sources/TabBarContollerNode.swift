@@ -227,7 +227,7 @@ final class TabBarControllerNode: ASDisplayNode {
         if self.tabBarView.view == nil {
             tabBarTransition = .immediate
         }
-        let isCompactMasterController = params.layout.deviceMetrics.type == .tablet && params.layout.size.width <= 1133.0 && !UserDefaults.standard.bool(forKey: "NavigationSplitContainer.forceRegularMasterWidth")
+        let isCompactMasterController = params.layout.deviceMetrics.type == .tablet && params.layout.size.width <= 160.0
         let tabBarSize = self.tabBarView.update(
             transition: tabBarTransition,
             component: AnyComponent(TabBarComponent(

@@ -108,7 +108,8 @@ final class NavigationSplitContainer: ASDisplayNode {
     }
 
     private func masterWidth(for layout: ContainerViewLayout) -> CGFloat {
-        if case .tablet = layout.deviceMetrics.type, layout.size.width <= Metrics.avatarRailMaximumContainerWidth, !self.forceRegularMasterWidth {
+        let isAvatarRailEnabled = UserDefaults.standard.bool(forKey: "ExperimentalUISettings.compactAvatarRail")
+        if isAvatarRailEnabled, case .tablet = layout.deviceMetrics.type, layout.size.width <= Metrics.avatarRailMaximumContainerWidth, !self.forceRegularMasterWidth {
             return Metrics.compactMasterWidth
         }
         return min(max(Metrics.regularMasterMinWidth, floor(layout.size.width / 3.0)), floor(layout.size.width / 2.0))

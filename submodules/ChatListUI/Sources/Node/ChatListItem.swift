@@ -2475,7 +2475,7 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
             let currentAvatarBadgeCleanBackgroundImage: UIImage? = PresentationResourcesChatList.badgeBackgroundBorder(item.presentationData.theme, diameter: avatarBadgeDiameter + 4.0)
             
             let leftInset: CGFloat = params.leftInset + avatarLeftInset
-            let avatarRailMode = useChatListLayout && params.width <= 120.0 && !item.editing && !item.interaction.isInlineMode
+            let avatarRailMode = useChatListLayout && params.width <= 160.0 && !item.editing && !item.interaction.isInlineMode
             
             enum ContentData {
                 case chat(itemPeer: EngineRenderedPeer, threadInfo: ChatListItemContent.ThreadInfo?, peer: EnginePeer?, hideAuthor: Bool, messageText: String, messageEntities: [MessageTextEntity], spoilers: [NSRange]?, customEmojiRanges: [(NSRange, ChatTextInputTextCustomEmojiAttribute)]?)
@@ -5587,11 +5587,14 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
             }
         }
         
-        if let _ = item.interaction.inlineNavigationLocation {
-        } else {
-            if self.avatarNode.storyStats != nil {
-                if let result = self.avatarNode.view.hitTest(self.view.convert(point, to: self.avatarNode.view), with: event) {
-                    return result
+        let isCompactAvatarRail = self.bounds.width <= 160.0
+        if !isCompactAvatarRail {
+            if let _ = item.interaction.inlineNavigationLocation {
+            } else {
+                if self.avatarNode.storyStats != nil {
+                    if let result = self.avatarNode.view.hitTest(self.view.convert(point, to: self.avatarNode.view), with: event) {
+                        return result
+                    }
                 }
             }
         }

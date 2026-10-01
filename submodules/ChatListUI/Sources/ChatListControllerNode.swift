@@ -250,6 +250,12 @@ public final class ChatListContainerNode: ASDisplayNode, ASGestureRecognizerDele
             }
             
             let isCompactAvatarRail = self.validLayout?.layout.deviceMetrics.type == .tablet && (self.validLayout?.layout.size.width ?? .greatestFiniteMagnitude) <= 160.0
+            if isCompactAvatarRail {
+                if self.currentItemNode.startedScrollingAtUpperBound || self.tempTopInset != 0.0 {
+                    self.currentItemNode.startedScrollingAtUpperBound = false
+                    self.tempTopInset = 0.0
+                }
+            }
             if !isCompactAvatarRail && !self.isInlineMode, itemNode.listNode.isTracking && !self.currentItemNode.startedScrollingAtUpperBound && self.tempTopInset == 0.0 {
                 if case let .known(value) = offset {
                     if value < -1.0 {
@@ -542,7 +548,10 @@ public final class ChatListContainerNode: ASDisplayNode, ASGestureRecognizerDele
                 return []
             }
             let isCompactAvatarRail = self.validLayout?.layout.deviceMetrics.type == .tablet && (self.validLayout?.layout.size.width ?? .greatestFiniteMagnitude) <= 160.0
-            let isStoryPostingAvailable = !isCompactAvatarRail && (self.controller?.isStoryPostingAvailable == true && !(self.context.sharedContext.callManager?.hasActiveCall ?? false))
+            if isCompactAvatarRail {
+                return []
+            }
+            let isStoryPostingAvailable = self.controller?.isStoryPostingAvailable == true && !(self.context.sharedContext.callManager?.hasActiveCall ?? false)
             guard self.availableFilters.count > 1 || isStoryPostingAvailable else {
                 return []
             }
@@ -877,7 +886,8 @@ public final class ChatListContainerNode: ASDisplayNode, ASGestureRecognizerDele
                     return
                 }
                 
-                if let controller = self.controller, let chatListDisplayNode = controller.displayNode as? ChatListControllerNode, let navigationBarComponentView = chatListDisplayNode.navigationBarView.view as? ChatListNavigationBar.View, let clippedScrollOffset = navigationBarComponentView.clippedScrollOffset {
+                let isCompactAvatarRail = layout.deviceMetrics.type == .tablet && layout.size.width <= 160.0
+                if !isCompactAvatarRail, let controller = self.controller, let chatListDisplayNode = controller.displayNode as? ChatListControllerNode, let navigationBarComponentView = chatListDisplayNode.navigationBarView.view as? ChatListNavigationBar.View, let clippedScrollOffset = navigationBarComponentView.clippedScrollOffset {
                     let scrollOffset = clippedScrollOffset
                     
                     let _ = itemNode.listNode.scrollToOffsetFromTop(scrollOffset, animated: false)
@@ -922,7 +932,8 @@ public final class ChatListContainerNode: ASDisplayNode, ASGestureRecognizerDele
                     strongSelf.pendingItemNode = nil
                     itemNode.listNode.tempTopInset = strongSelf.tempTopInset
                     
-                    if let controller = strongSelf.controller, let chatListDisplayNode = controller.displayNode as? ChatListControllerNode, let navigationBarComponentView = chatListDisplayNode.navigationBarView.view as? ChatListNavigationBar.View, let clippedScrollOffset = navigationBarComponentView.clippedScrollOffset {
+                    let isCompactAvatarRail = strongSelf.validLayout?.layout.deviceMetrics.type == .tablet && (strongSelf.validLayout?.layout.size.width ?? .greatestFiniteMagnitude) <= 160.0
+                    if !isCompactAvatarRail, let controller = strongSelf.controller, let chatListDisplayNode = controller.displayNode as? ChatListControllerNode, let navigationBarComponentView = chatListDisplayNode.navigationBarView.view as? ChatListNavigationBar.View, let clippedScrollOffset = navigationBarComponentView.clippedScrollOffset {
                         let scrollOffset = clippedScrollOffset
                         
                         let _ = itemNode.listNode.scrollToOffsetFromTop(scrollOffset, animated: false)
@@ -978,7 +989,7 @@ public final class ChatListContainerNode: ASDisplayNode, ASGestureRecognizerDele
                         
                         transition.animatePositionAdditive(node: itemNode, offset: CGPoint(x: -offset, y: 0.0))
                                                 
-                        itemNode.updateLayout(size: layout.size, insets: insets, visualNavigationHeight: visualNavigationHeight, originalNavigationHeight: originalNavigationHeight, inlineNavigationLocation: inlineNavigationLocation, inlineNavigationTransitionFraction: inlineNavigationTransitionFraction, storiesInset: storiesInset, transition: .immediate)
+                        itemNode.updateLayout(size: layout.size, insets: insets, visualNavigationHeight: visualNavigationHeight, originalNavigationHeight: originalNavigationHeight, inlineNavigationLocation: inlineNavigationLocation, inlineNavigationTransitionFraction: inlineNavigationTransitionFraction, storiesInset: (layout.deviceMetrics.type == .tablet && layout.size.width <= 160.0) ? 0.0 : storiesInset, transition: .immediate)
                         if let scrollingOffset = strongSelf.scrollingOffset {
                             itemNode.updateScrollingOffset(navigationHeight: scrollingOffset.navigationHeight, offset: scrollingOffset.offset, transition: .immediate)
                         }
@@ -999,7 +1010,7 @@ public final class ChatListContainerNode: ASDisplayNode, ASGestureRecognizerDele
                 }))
                 
                 if let (layout, _, visualNavigationHeight, originalNavigationHeight, _, insets, _, _, inlineNavigationLocation, inlineNavigationTransitionFraction, storiesInset) = self.validLayout {
-                    itemNode.updateLayout(size: layout.size, insets: insets, visualNavigationHeight: visualNavigationHeight, originalNavigationHeight: originalNavigationHeight, inlineNavigationLocation: inlineNavigationLocation, inlineNavigationTransitionFraction: inlineNavigationTransitionFraction, storiesInset: storiesInset, transition: .immediate)
+                    itemNode.updateLayout(size: layout.size, insets: insets, visualNavigationHeight: visualNavigationHeight, originalNavigationHeight: originalNavigationHeight, inlineNavigationLocation: inlineNavigationLocation, inlineNavigationTransitionFraction: inlineNavigationTransitionFraction, storiesInset: (layout.deviceMetrics.type == .tablet && layout.size.width <= 160.0) ? 0.0 : storiesInset, transition: .immediate)
                     
                     if let scrollingOffset = self.scrollingOffset {
                         itemNode.updateScrollingOffset(navigationHeight: scrollingOffset.navigationHeight, offset: scrollingOffset.offset, transition: .immediate)
@@ -1019,6 +1030,12 @@ public final class ChatListContainerNode: ASDisplayNode, ASGestureRecognizerDele
     
     public func update(layout: ContainerViewLayout, navigationBarHeight: CGFloat, visualNavigationHeight: CGFloat, originalNavigationHeight: CGFloat, cleanNavigationBarHeight: CGFloat, insets: UIEdgeInsets, isReorderingFilters: Bool, isEditing: Bool, inlineNavigationLocation: ChatListControllerLocation?, inlineNavigationTransitionFraction: CGFloat, storiesInset: CGFloat, transition: ContainedViewLayoutTransition) {
         self.validLayout = (layout, navigationBarHeight, visualNavigationHeight, originalNavigationHeight, cleanNavigationBarHeight, insets, isReorderingFilters, isEditing, inlineNavigationLocation, inlineNavigationTransitionFraction, storiesInset)
+        let isCompactAvatarRail = layout.deviceMetrics.type == .tablet && layout.size.width <= 160.0
+        let effectiveStoriesInset: CGFloat = isCompactAvatarRail ? 0.0 : storiesInset
+        if isCompactAvatarRail && (self.currentItemNode.startedScrollingAtUpperBound || self.tempTopInset != 0.0) {
+            self.currentItemNode.startedScrollingAtUpperBound = false
+            self.tempTopInset = 0.0
+        }
         self._validLayoutReady.set(.single(true))
         
         transition.updateAlpha(node: self, alpha: isReorderingFilters ? 0.5 : 1.0)
@@ -1030,7 +1047,7 @@ public final class ChatListContainerNode: ASDisplayNode, ASGestureRecognizerDele
             transition.updateBackgroundColor(node: self, color: self.presentationData.theme.chatList.backgroundColor)
         }
         
-        self.panRecognizer?.isEnabled = !isEditing
+        self.panRecognizer?.isEnabled = !isCompactAvatarRail && !isEditing
         
         transition.updateFrame(layer: self.leftSeparatorLayer, frame: CGRect(origin: CGPoint(x: -UIScreenPixel, y: 0.0), size: CGSize(width: UIScreenPixel, height: layout.size.height)))
         if let selectedIndex = self.availableFilters.firstIndex(where: { $0.id == self.selectedId }) {
@@ -1088,7 +1105,7 @@ public final class ChatListContainerNode: ASDisplayNode, ASGestureRecognizerDele
                 }
                 
                 itemNode.listNode.isMainTab.set(self.availableFilters.firstIndex(where: { $0.id == id }) == 0)
-                itemNode.updateLayout(size: layout.size, insets: insets, visualNavigationHeight: visualNavigationHeight, originalNavigationHeight: originalNavigationHeight, inlineNavigationLocation: inlineNavigationLocation, inlineNavigationTransitionFraction: itemInlineNavigationTransitionFraction, storiesInset: storiesInset, transition: nodeTransition)
+                itemNode.updateLayout(size: layout.size, insets: insets, visualNavigationHeight: visualNavigationHeight, originalNavigationHeight: originalNavigationHeight, inlineNavigationLocation: inlineNavigationLocation, inlineNavigationTransitionFraction: itemInlineNavigationTransitionFraction, storiesInset: effectiveStoriesInset, transition: nodeTransition)
                 if let scrollingOffset = self.scrollingOffset {
                     itemNode.updateScrollingOffset(navigationHeight: scrollingOffset.navigationHeight, offset: scrollingOffset.offset, transition: nodeTransition)
                 }
@@ -1847,7 +1864,8 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
         var storiesInset = storiesInset
         
         let navigationBarLayout = self.updateNavigationBar(layout: layout, deferScrollApplication: true, transition: ComponentTransition(transition))
-        self.mainContainerNode.initialScrollingOffset = ChatListNavigationBar.searchScrollHeight + navigationBarLayout.storiesInset
+        let isDesktopLikeCompactSidebar = layout.deviceMetrics.type == .tablet && layout.size.width <= 160.0
+        self.mainContainerNode.initialScrollingOffset = isDesktopLikeCompactSidebar ? 0.0 : (ChatListNavigationBar.searchScrollHeight + navigationBarLayout.storiesInset)
         
         navigationBarHeight = navigationBarLayout.navigationHeight
         visualNavigationHeight = navigationBarLayout.navigationHeight
